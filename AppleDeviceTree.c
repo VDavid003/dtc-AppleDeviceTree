@@ -151,7 +151,8 @@ DT__AddChild(Node *parent, char *name)
         parent->children = node;
     }
     DTInfo.numNodes++;
-    DT__AddProperty(node, "name", strlen(name) + 1, name);
+    //if (name[0] != '/')
+        //DT__AddProperty(node, "name", strlen(name) + 1, name);
     return node;
 }
 
@@ -217,6 +218,21 @@ DT__Finalize(void)
     DTInfo.totalPropertySize = 0;
 }
 
+static char *sstrstr(char *haystack, char *needle, size_t length)
+{
+    size_t needle_length = strlen(needle);
+    size_t i;
+    for (i = 0; i < length; i++) {
+        if (i + needle_length > length) {
+            return NULL;
+        }
+        if (strncmp(&haystack[i], needle, needle_length) == 0) {
+            return &haystack[i];
+        }
+    }
+    return NULL;
+}
+
 static void *
 FlattenNodes(Node *node, void *buffer)
 {
@@ -236,6 +252,8 @@ FlattenNodes(Node *node, void *buffer)
         flatProp->length = prop->length;
         buffer += sizeof(DeviceTreeNodeProperty);
         bcopy(prop->value, buffer, prop->length);
+        if (sstrstr(prop->value, "syscfg", prop->length) != NULL)
+            flatProp->length |= 0x80000000;
         buffer += RoundToLong(prop->length);
     }
     flatNode->nProperties = count;

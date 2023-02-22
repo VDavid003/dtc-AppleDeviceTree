@@ -414,10 +414,10 @@ static void check_name_properties(struct check *c, struct node *root,
 	} else {
 		/* The name property is correct, and therefore redundant.
 		 * Delete it */
-		*pp = prop->next;
-		free(prop->name);
-		data_free(prop->val);
-		free(prop);
+		//*pp = prop->next;
+		//free(prop->name);
+		//data_free(prop->val);
+		//free(prop);
 	}
 }
 CHECK_IS_STRING(name_is_string, "name", ERROR);
