@@ -4,6 +4,7 @@
 
 #if 1
 #include "stdint.h"
+#include "dtc.h"
 /*
  
  Structures for a Flattened Device Tree 
@@ -410,6 +411,54 @@ DT__PrintTree(Node *node)
 {
     if (node == 0) node = rootNode;
     _PrintTree(node, 0);
+}
+
+struct node*
+DT__UnflattenTree(void* flatNode, int* outptr)
+{
+    DeviceTreeNode* dt_node = flatNode;
+    void* ptr = flatNode;
+    struct node *node;
+
+    //printf("ptr: %p\n", ptr);
+    node = build_node(NULL, NULL);
+    node->name = "test";
+
+    ptr += sizeof(*dt_node);
+    //printf("ptr: %p\n", ptr);
+    //printf("props: %d\n", dt_node->nProperties);
+    for (int i=0; i < dt_node->nProperties; i++) {
+        DeviceTreeNodeProperty* prop = ptr;
+        int actualLen = prop->length & 0x7fffffff;
+        struct data d = empty_data;
+
+        ptr += sizeof(*prop);
+        //printf("ptr: %p\n", ptr);
+        //printf("%s", prop->name);
+        if (actualLen > 0) {
+            d = data_grow_for(d, actualLen);
+            d.len = actualLen;
+            memcpy(d.val, ptr, actualLen);
+        }
+        add_property(node, build_property(xstrdup(prop->name), d));
+        if (strcmp(prop->name, "name") == 0)
+            node->name = xstrdup(d.val);
+        ptr += RoundToLong(actualLen);
+        //printf("ptr: %p\n", ptr);
+    }
+
+    for (int i=0; i < dt_node->nChildren; i++) {
+         int output = 0;
+         add_child(node, DT__UnflattenTree(ptr, &output));
+         ptr += output;
+    }
+
+    if(outptr) {
+        *outptr = ptr - flatNode;
+    } else {
+        node->name = "";
+    }
+    return node;
 }
 
 #if DEBUG

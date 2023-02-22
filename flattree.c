@@ -765,6 +765,8 @@ static struct node *unflatten_tree(struct inbuf *dtbuf,
 				   struct inbuf *strbuf,
 				   const char *parent_flatname, int flags)
 {
+	return DT__UnflattenTree(dtbuf->ptr, NULL);
+#if 0
 	struct node *node;
 	char *flatname;
 	uint32_t val;
@@ -819,6 +821,7 @@ static struct node *unflatten_tree(struct inbuf *dtbuf,
 	} while (val != FDT_END_NODE);
 
 	return node;
+#endif
 }
 
 
@@ -841,6 +844,13 @@ struct boot_info *dt_from_blob(const char *fname)
 
 	f = srcfile_relative_open(fname, NULL);
 
+	fseek(f, 0, SEEK_END);
+	totalsize = ftell(f);
+	fseek(f, 0, SEEK_SET);  /* same as rewind(f); */
+	blob = xmalloc(totalsize);
+	fread(blob, totalsize, 1, f);
+
+#if 0
 	rc = fread(&magic, sizeof(magic), 1, f);
 	if (ferror(f))
 		die("Error reading DT blob magic number: %s\n",
@@ -939,16 +949,20 @@ struct boot_info *dt_from_blob(const char *fname)
 
 	if (val != FDT_BEGIN_NODE)
 		die("Device tree blob doesn't begin with FDT_BEGIN_NODE (begins with 0x%08x)\n", val);
+#endif
+	inbuf_init(&dtbuf, blob, blob + totalsize);
 
 	tree = unflatten_tree(&dtbuf, &strbuf, "", flags);
 
+#if 0
 	val = flat_read_word(&dtbuf);
 	if (val != FDT_END)
 		die("Device tree blob doesn't end with FDT_END\n");
+#endif
 
 	free(blob);
 
 	fclose(f);
 
-	return build_boot_info(reservelist, tree, boot_cpuid_phys);
+	return build_boot_info(NULL, tree, boot_cpuid_phys);
 }

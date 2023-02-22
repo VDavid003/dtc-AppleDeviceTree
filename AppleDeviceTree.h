@@ -57,5 +57,8 @@ DT__Finalize(void);
 void
 DT__FlattenDeviceTree(void **result, uint32_t *length);
 
+struct node*
+DT__UnflattenTree(void* flatNode, int* outptr);
+
 
 #endif /* __DEVICE_TREE_H */
